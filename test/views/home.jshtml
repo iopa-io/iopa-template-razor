@@ -5,7 +5,7 @@
 </head>
 
 <body>
-    <H1>@model.message</H1>
+    <H1>@model.data.message</H1>
 </body>
 
 </html>

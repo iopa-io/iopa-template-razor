@@ -21,14 +21,18 @@
 
 const razor = require('./index.js'),
     iopa = require('iopa'),
+    templates = require('iopa-templates'),
     http = require('http'),
     iopaConnect = require('iopa-connect')
 
 var app = new iopa.App();
 
+app.use(templates);
+
+app.engine('.jshtml', razor({views: 'test/views' }));
+    
 app.use(function(context, next) {
-    context.model = {'message': "Hello World"};
-    return razor.renderView(context, '/test/views/index.js.html');
+    return context.render('home.jshtml', {data: { message: "Hello World" } });
 });
 
 var port = process.env.PORT || 3000;

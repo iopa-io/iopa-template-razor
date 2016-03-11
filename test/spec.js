@@ -13,30 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 // global.Promise = require('bluebird');
- 
+
 const razor = require('../index.js'),
-  stubServer = require('iopa-test').stubServer
-  
-var should = require('should');
-const iopa = require('iopa');
+    iopa = require('iopa'),
+    templates = require('iopa-templates'),
+    http = require('http'),
+    iopaConnect = require('iopa-connect'),
+    stubServer = require('iopa-test').stubServer,
+    should = require('should');
 
-describe('#Razor()', function () {
- 
-    var seq = 0;
+describe('#Razor()', function() {
 
-    it('should format razor template', function (done) {
+    it('should format razor template', function(done) {
 
         var app = new iopa.App();
-        
+
+        app.use(templates);
+
+        app.engine('.jshtml', razor({ views: 'test/views' }));
+
         app.use(function(context, next) {
-            context.model = { 'message': "Hello World" };
-            return razor.renderView(context, '/test/views/index.js.html');
+            return context.render('home.jshtml', { data: { message: "Hello World" } });
         });
-    
+
         var server = stubServer.createServer(app.build())
-      
+
         var context = server.receive();
         var responseBody = context.response["iopa.Body"].toString();
         responseBody.should.containEql('<H1>Hello World</H1>');

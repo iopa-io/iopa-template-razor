@@ -31,7 +31,7 @@ build:
         - git checkout $BRANCH
         - echo "//registry.npmjs.org/:_authToken=${NPM_AUTH_TOKEN}" >> ~/.npmrc
         - npm version patch --message "auto-publish %s via SHIPPABLE [ci skip] [skip ci]"
-        - git remote set-url origin ssh://git@github.com/iopa-io/$REPO_NAME.git
+        - git remote set-url origin ssh://git@github.com/$ORG_NAME/$REPO_NAME.git
         - git config --get remote.origin.url
         - git push
         - npm publish

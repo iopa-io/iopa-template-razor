@@ -25,21 +25,25 @@ To date, the raw parsing routines have not been adjusted materially from the Raz
 
 A JavaScript implementation of the Razor view engine that aims to be simple and compatible for use both in the browser and in Node--simple enough for templating:
 
-    razor.compile('hello @model.name')({ name: 'world' }) == 'hello world'
+    razor.lib.compile('hello @model.name')({ name: 'world' }) == 'hello world'
 
-As well as a Node view-engine:
+As well as an IOPA view-engine:
 
 ```js
-const razor = require('iopa-template-razor'),
-    iopa = require('iopa'),
+const iopa = require('iopa'),
+    templates = require('iopa-templates'),
+    razor = require('iopa-template-razor'),
     http = require('http'),
     iopaConnect = require('iopa-connect')
 
 var app = new iopa.App();
 
+app.use(templates);
+
+app.engine('.jshtml', razor({views: 'test/views' }));
+    
 app.use(function(context, next) {
-    context.model = {'message': "Hello World"};
-    return razor.renderView(context, '/test/views/index.js.html');
+    return context.render('home.jshtml', {data: { message: "Hello World" } });
 });
 
 http.createServer(app.buildHttp()).listen(3000);

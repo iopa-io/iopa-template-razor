@@ -42,6 +42,7 @@
   "devDependencies": {
     "iopa": "^1.3.59",
     "iopa-connect": "^1.3.1",
+    "iopa-templates": "^0.9.1",
     "iopa-test": "^1.3.18",
     "mocha": "^2.3.2",
     "mocha-junit-reporter": "^1.6.1",

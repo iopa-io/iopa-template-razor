@@ -16,18 +16,83 @@
  
 const razor = require('./lib/razor.js');
 const path = require('path');
+const fs = require('fs');
+const utils = require('./util.js');
 
-exports.renderView = function(context, fileName, basePath)
-{   
-    return new Promise(function(resolve,reject){
-         renderViewCallback(context, fileName, basePath, function(err,data){
-             if(err !== null) return reject(err);
-             resolve(data);
-         });
-    });
+module.exports = IopaRazor;
+module.exports.lib = razor;
+
+function IopaRazor(config) {
+    utils.assign(this, {
+        razor     : razor,
+        extname        : '.jshtml',
+        views          : 'views',
+        defaultLayout  : undefined,
+        helpers        : undefined,
+        compilerOptions: undefined,
+    }, config);
+    
+    utils.assign(this, {
+        layouts        : this.views + '/layouts/',
+        partials       : this.views + '/partials/',
+    }, config);
+
+    this.engine = this.renderView.bind(this);
+
+    if (this.extname.charAt(0) !== '.') {
+        this.extname = '.' + this.extname;
+    }
+
+    this.compiled    = Object.create(null);
+    this.precompiled = Object.create(null);
+
+    this._fsCache = Object.create(null);
 }
 
-exports.render = function(id, body, model, basePath, callback)
+
+IopaRazor.prototype.renderView = function (view, options, callback) {
+    options || (options = {});
+    
+    var viewname, viewPath;
+    var viewRoot = ( options.settings && options.settings.views) || this.views;
+    var basePath = path.resolve(viewRoot);
+    if (path.resolve( view ) == path.normalize( view ))
+       {
+           // absolute path
+            viewPath = view;
+            view = path.relative(basePath, viewPath)
+       } else
+       {
+           // relative path
+           viewPath = path.join(basePath, view );
+       }
+       
+    viewname = this._getTemplateName(view);
+
+    options = {
+        view  : viewname,
+        layout: 'layout' in options ? options.layout : this.defaultLayout,
+        data    : options.data
+     /*   helpers : helpers,
+        partials: partials, */
+    };
+    
+    try{ razor.view(view, basePath + path.sep, function(template) {
+               if(template) {
+               template(options, function(html){
+                            callback(null, html);
+                        });
+               }
+               else {     
+                     callbback(404);
+               }
+                    })}
+    catch (ex) { 
+        callback(ex);
+    }
+};
+
+IopaRazor.prototype.render = function(id, body, model, basePath, callback)
 {
    if(!callback && typeof basePath === 'function')
       return exports.render(id, body, model, process.cwd(), basePath);
@@ -37,27 +102,13 @@ exports.render = function(id, body, model, basePath, callback)
              }); 
 }
 
-var renderViewCallback = function(context, fileName, basePath, callback)
-{
-   if(!callback && typeof basePath === 'function')
-      return renderViewCallback(context, fileName, path.join(process.cwd(), '/views/'), basePath);
-    
-    try{ razor.view(fileName, basePath, function(template) {
-               if(template) {
-               template(context.model, function(html){
-                        context.response.writeHead(200, {'Content-Type': 'text/html'});
-                        context.response.end(html);
-                        callback(null);
-                        });
-               }
-               else {
-               
-               context.response.writeHead(404, {'Content-Type': 'text/html'});
-               context.response.end('<h1>Not Found</h1>');
-               callback(500);
-               }
-                    })}
-    catch (ex) { 
-        callback("500 Razor Parse Error in " + path + " at line " + ex.line + ":<br>" + ex.message );
+IopaRazor.prototype._getTemplateName = function (filePath, namespace) {
+    var extRegex = new RegExp(this.extname + '$');
+    var name     = filePath.replace(extRegex, '');
+
+    if (namespace) {
+        name = namespace + '/' + name;
     }
-}
+
+    return name;
+};

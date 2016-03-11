@@ -14,4 +14,18 @@
  * limitations under the License.
  */
  
-module.exports = require ( './src/iopa-razor.js' );
+ 
+var IopaRazor = require('./src/iopa-razor.js');
+
+exports = module.exports  = engine;
+exports.create            = create;
+exports.engine            = engine;
+exports.lib = IopaRazor.lib;
+
+function create(config) {
+    return new IopaRazor(config);
+}
+
+function engine(config) {
+    return create(config).engine;
+}
